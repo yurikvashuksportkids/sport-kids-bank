@@ -1,4 +1,4 @@
-import streamlit as st
+mport streamlit as st
 import pandas as pd
 import datetime
 import time
@@ -7,6 +7,7 @@ import random
 from oauth2client.service_account import ServiceAccountCredentials
 import streamlit.components.v1 as components
 import base64
+import json # Додано для нового способу читання ключів
 
 # --- НАЛАШТУВАННЯ СТОРІНКИ ---
 st.set_page_config(page_title="Sport Kids Bank", page_icon="⚽", layout="centered")
@@ -120,7 +121,6 @@ DINO_GAME_HTML = """
     if (score >= 100000) { 
         ctx.fillStyle = "#FFED00"; ctx.font = "bold 24px Montserrat"; ctx.fillText("🎉 ПЕРЕМОГА!", 70, 70); 
         
-        // Генеруємо випадковий код
         let currentWinCode = Math.floor(Math.random() * 90000) + 10000;
         
         ctx.fillStyle = "white"; ctx.font = "bold 18px Montserrat"; 
@@ -176,11 +176,11 @@ def generate_secure_pin(existing_pins):
         if len(set(pin_str)) > 1 and pin_str not in "0123456789" and pin_str not in "9876543210" and pin not in existing_pins:
             return pin
 
-# --- БАЗА ДАНИХ (ПІДКЛЮЧЕННЯ ХМАРНЕ) ---
+# --- БАЗА ДАНИХ (ПІДКЛЮЧЕННЯ ХМАРНЕ - НОВИЙ МЕТОД) ---
 @st.cache_resource
 def init_connection():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds_dict = dict(st.secrets["gcp_service_account"])
+    creds_dict = json.loads(st.secrets["my_json_key"])
     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     client = gspread.authorize(creds)
     return client.open("SportKidsBank_DB")
@@ -191,7 +191,7 @@ with st.spinner("⏳ Підключення до спортивного банк
         users_sheet = db.worksheet("Users")
         trans_sheet = db.worksheet("Transactions")
     except Exception as e:
-        st.error(f"🛑 Помилка підключення: {e}.")
+        st.error(f"🛑 Помилка підключення: {e}")
         st.stop()
 
 @st.cache_data(ttl=15)
